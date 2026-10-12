@@ -1,0 +1,117 @@
+{
+  "case_id": "H04",
+  "synthetic": true,
+  "review_status": "programmatically_consistent_not_independently_engineer_reviewed",
+  "source_sha256": "2ec554257ade4a560253d81ee329ae3d394373d03b1660dab1feeaae2048abd4",
+  "components": [
+    {
+      "item_no": 1,
+      "part_number": "A400",
+      "name_zh": "三夹紧单元",
+      "material": "组合件",
+      "quantity": 1,
+      "unit": "套",
+      "source_page": 1
+    },
+    {
+      "item_no": 2,
+      "part_number": "S410",
+      "name_zh": "夹紧子总成",
+      "material": "组合件",
+      "quantity": 3,
+      "unit": "套",
+      "source_page": 1
+    },
+    {
+      "item_no": 3,
+      "part_number": "P420",
+      "name_zh": "安装板",
+      "material": "Q235B",
+      "quantity": 1,
+      "unit": "件",
+      "source_page": 1
+    },
+    {
+      "item_no": 4,
+      "part_number": "P411",
+      "name_zh": "夹爪",
+      "material": "45",
+      "quantity": 6,
+      "unit": "件",
+      "source_page": 1
+    },
+    {
+      "item_no": 5,
+      "part_number": "B412",
+      "name_zh": "内六角螺钉M6×16",
+      "material": "35",
+      "quantity": 11,
+      "unit": "件",
+      "source_page": 1
+    }
+  ],
+  "assembly": {
+    "nodes": [
+      {
+        "id": "root",
+        "parent_id": null,
+        "component_index": 0,
+        "quantity_per_parent": null,
+        "source_page": 1,
+        "evidence": "标题及装配说明：整机数量1套"
+      },
+      {
+        "id": "n1",
+        "parent_id": "root",
+        "component_index": 1,
+        "quantity_per_parent": 3,
+        "source_page": 1,
+        "evidence": "A400 每套包含 S410 × 3"
+      },
+      {
+        "id": "n2",
+        "parent_id": "n1",
+        "component_index": 3,
+        "quantity_per_parent": 2,
+        "source_page": 1,
+        "evidence": "S410 每套包含 P411 × 2"
+      },
+      {
+        "id": "n3",
+        "parent_id": "n1",
+        "component_index": 4,
+        "quantity_per_parent": 4,
+        "source_page": 1,
+        "evidence": "S410 每套包含 B412 × 4"
+      },
+      {
+        "id": "n4",
+        "parent_id": "root",
+        "component_index": 2,
+        "quantity_per_parent": 1,
+        "source_page": 1,
+        "evidence": "A400 每套包含 P420 × 1"
+      }
+    ]
+  },
+  "exploded_quantities": {
+    "A400": 1,
+    "S410": 3,
+    "P420": 1,
+    "P411": 6,
+    "B412": 12
+  },
+  "expected_findings": [
+    {
+      "err_id": "ERR-08",
+      "part_number": "B412",
+      "printed_quantity": 11,
+      "expected_quantity": 12,
+      "evidence": "3套子总成 × 每套4颗 = 12，与明细栏11冲突",
+      "action": "保留原始提取11；提出改为12的候选，需人工确认"
+    }
+  ],
+  "scope": "BOM字段及装配父子关系；不评价尺寸/公差/形位合规。根节点level=1，用量null。节点ID可不同，以父子件号及用量比较。",
+  "max_depth": 3,
+  "expected_node_count": 5
+}

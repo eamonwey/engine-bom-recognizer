@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="api-token" content="__ENGINE_BOM_API_TOKEN__">
+<title>发动机元器件 BOM 智能识别系统</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<a class="skip-link" href="#workspace">跳到工作区</a>
+<aside class="sidebar">
+  <div class="logo"><span class="brand-mark" aria-hidden="true">E</span><div>工艺智能工作台<small>发动机 BOM 与图纸审查</small></div></div>
+  <div class="nav-caption">工作空间</div>
+  <nav id="nav" aria-label="主导航">
+    <a href="#bom" data-view="bom" class="active" aria-current="page"><span class="nav-icon" aria-hidden="true">▤</span>BOM 与图纸纠错</a>
+    <a href="#doc" data-view="doc"><span class="nav-icon" aria-hidden="true">▧</span>文档要素与复核</a>
+    <a href="#compare" data-view="compare"><span class="nav-icon" aria-hidden="true">⇄</span>变更与影响分析</a>
+    <a href="#review" data-view="review"><span class="nav-icon" aria-hidden="true">✓</span>复核与历史</a>
+    <a href="#dethistory" data-view="dethistory"><span class="nav-icon" aria-hidden="true">⏱</span>检测历史</a>
+    <a href="#settings" data-view="settings"><span class="nav-icon" aria-hidden="true">⚙</span>系统设置</a>
+  </nav>
+  <div class="sidebar-foot">
+    <div id="status-line">检测模型状态…</div>
+  </div>
+</aside>
+
+<main id="workspace" tabindex="-1">
+  <header class="workspace-bar"><div>工程工作空间 <span aria-hidden="true">/</span> <strong id="page-location">BOM 与图纸纠错</strong></div><button id="help-open" class="quiet">使用指南</button></header>
+  <!-- ═══════════ BOM 识别 ═══════════ -->
+  <section id="view-bom" class="view active">
+    <h1>从一张图纸，开始构建 BOM</h1>
+    <p class="hint">一次上传，生成零部件清单、装配关系与图纸问题候选。核对原图后，保存结果并导出。</p>
+    <ol class="workflow-steps" aria-label="图纸处理流程"><li class="current"><span>1</span>上传图纸</li><li><span>2</span>识别与检查</li><li><span>3</span>人工复核</li><li><span>4</span>保存与导出</li></ol>
+    <div class="card upload-card">
+      <div class="section-heading"><div><h2>上传工程图纸</h2><p>建议使用文字清晰、明细栏完整的二维图纸。</p></div><span class="badge">单文件处理</span></div>
+      <div class="drop" id="bom-drop"><span class="upload-glyph" aria-hidden="true">↥</span><strong class="drop-title">点击选择文件，或拖放到这里</strong><span class="drop-hint">PDF、PNG、JPG、DXF 等格式 · DXF 需要本地渲染组件</span><span class="file-meta"></span><input type="file" id="bom-file" aria-label="上传工程图纸" accept=".dxf,.pdf,.png,.jpg,.jpeg,.bmp,.tif,.tiff,.webp" hidden></div>
+      <div class="row options">
+        <label>模型 <select id="bom-provider"><option value="">默认配置</option><option value="mock">离线演示(Mock)</option><option value="openai_compat">视觉模型 API</option></select></label>
+        <label class="chk"><input type="checkbox" id="bom-pre-deskew" checked> 倾斜校正</label>
+        <label class="chk"><input type="checkbox" id="bom-pre-denoise"> 去噪</label>
+        <label class="chk"><input type="checkbox" id="bom-pre-binarize"> 二值化</label>
+        <button id="bom-start" class="primary">生成 BOM 并检查图纸</button>
+      </div>
+    </div>
+    <div id="bom-progress" class="progress hidden"><div class="bar"></div><span>识别中，请稍候（高密度图纸约 1~5 分钟）…</span></div>
+    <div id="bom-error" class="alert error hidden"></div>
+    <div id="bom-empty" class="capability-grid"><article><span class="feature-icon">▤</span><h2>结构化零部件清单</h2><p>提取件号、名称、材料与数量，核对后导出 Excel、CSV 或 JSON。</p></article><article><span class="feature-icon">⌕</span><h2>有依据的图纸检查</h2><p>结合规则与视觉模型给出问题候选，回到原图确认每一项。</p></article><article><span class="feature-icon">⑂</span><h2>装配关系与修订</h2><p>确认父子件关系，框选文字生成修订副本，保留原始图纸。</p></article></div>
+
+    <div id="bom-result" class="hidden">
+      <div class="result-toolbar"><span class="badge">识别结果 · 待人工复核</span><nav aria-label="结果快速定位"><a href="#bom-list-panel">零部件清单</a><a href="#bom-check-panel">图纸检查</a><a href="#bom-assembly-panel">装配层级</a><a href="#bom-correct-panel">图纸修订</a></nav></div>
+      <div class="card">
+        <h2>标题栏信息</h2>
+        <div id="bom-titleblock" class="kv-grid"></div>
+      </div>
+      <div class="card" id="bom-list-panel">
+        <h2>零部件清单</h2><p class="hint">浅色单元格可直接编辑。修改后先保存，再导出；正式批准在“复核与历史”中完成。</p>
+        <p id="bom-validation-issues" class="alert warn hidden"></p>
+        <div class="table-tools"><label for="bom-search">查找零部件</label><input id="bom-search" type="search" placeholder="件号、名称、材料…"><span id="bom-row-count" class="muted"></span><span id="bom-edit-state" class="badge hidden">有未保存修改</span></div>
+        <div class="table-wrap"><table id="bom-table"></table></div>
+        <div class="row">
+          <button id="bom-save" class="primary">保存 BOM 编辑稿</button><button data-go="review">进入正式复核</button>
+          <span class="flex"></span>
+          <button data-dl="/api/export/bom/__ID__?fmt=json">导出 JSON</button>
+          <button data-dl="/api/export/bom/__ID__?fmt=csv">导出 CSV</button>
+          <button data-dl="/api/export/bom/__ID__?fmt=xlsx">导出 Excel</button>
+        </div>
+        <div id="bom-save-msg" class="ok-msg hidden"></div>
+      </div>
+      <div class="card" id="bom-check-panel">
+        <h2>图纸检查结果（<span id="bom-issues-count">0</span> 项）</h2>
+        <div id="bom-issues"></div>
+      </div>
+      <div class="card" id="bom-assembly-panel"><h2>装配层级</h2><p class="hint">按零件的直接安装父子关系展示：安装基体 → 父件 → 子件。每父件用量指一个父件所需数量；证据不足的关系留待复核。</p>
+        <p id="assembly-status"></p><div class="table-wrap"><table id="assembly-table"></table></div>
+        <p>不明确的父子关系保留为待确认。JSON 中 component_index 为零部件清单从0开始的行号；同一零件多次装配可建立多个节点。</p>
+        <label>复核人 <input id="assembly-reviewer"></label>
+        <details><summary>高级编辑：父子关系 JSON</summary><textarea id="assembly-editor" aria-label="装配层级 JSON" rows="12" style="width:100%"></textarea></details>
+        <button id="assembly-save">保存已确认层级</button><span id="assembly-message"></span>
+      </div>
+      <div class="card"><h2>图纸区域定位</h2><p class="hint">自动范围用于查看与辅助识别，完整性需复核。定位后可调整蓝框；它不会作为文字修订范围。</p><div id="drawing-regions"></div></div>
+      <p id="combined-visual-status"></p>
+      <details class="card"><summary>尺寸标注抽取</summary><div class="table-wrap"><table id="combined-dims"></table></div></details>
+      <div class="card" id="bom-correct-panel"><h2>生成图纸修订副本</h2>
+        <p>在原图上拖动框选需要修改的文字，输入正确值，再生成修订副本。框内原内容将被替换，请确保框选范围准确。</p>
+        <label>页码 <input id="ins-page" type="number" min="1" value="1" style="width:70px"></label>
+        <button id="ins-preview-load" class="btn">显示原图</button>
+        <button id="ins-mode-view" class="btn" aria-pressed="false">调整蓝框查看范围</button>
+        <button id="ins-mode-text" class="btn" aria-pressed="true">框选文字修订范围</button>
+        <div id="ins-preview-wrap"><div class="zoom-bar" role="toolbar" aria-label="原图缩放工具">
+          <button id="ins-zoom-out" class="zbtn" title="缩小">−</button>
+          <span id="ins-zoom-status" class="zval">适应宽度</span>
+          <button id="ins-zoom-in" class="zbtn" title="放大">＋</button>
+          <span class="zsep" aria-hidden="true"></span>
+          <button id="ins-zoom-fit" class="zbtn ztext" title="缩放到容器宽度">适应</button>
+          <button id="ins-zoom-natural" class="zbtn ztext" title="按图纸原始像素显示">1:1</button>
+          <button id="ins-zoom-full" class="zbtn ztext" title="全屏查看（ESC 退出）">全屏</button>
+        </div><canvas id="ins-preview" style="max-width:100%;height:auto;display:block;touch-action:none"></canvas></div>
+        <p id="ins-box-status">尚未框选</p>
+        <label>复核人 <input id="ins-reviewer" placeholder="姓名"></label>
+        <label>原文字 <input id="ins-old-text" placeholder="原标注"></label>
+        <label>修正值 <input id="ins-new-text" placeholder="确认后的正确标注"></label>
+        <details><summary>批量修订 JSON</summary><textarea id="ins-reviewed" rows="7" style="width:100%" placeholder='{"reviewer":"复核人","patches":[]}'></textarea></details>
+        <button id="ins-correct" class="primary">生成文字修订副本</button>
+        <a id="ins-correct-download" class="hidden" target="_blank">打开修订图纸</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 文档要素提取 ═══════════ -->
+  <section id="view-doc" class="view">
+    <h1>把技术文档整理为结构化要素</h1>
+    <p class="hint">上传 Word（.docx）/ PDF / TXT / 图片，自动提取技术参数、材料要求、工艺要求、检验标准。</p>
+    <div class="card">
+      <div class="drop" id="doc-drop"><span class="upload-glyph" aria-hidden="true">↥</span><strong class="drop-title">选择技术规范或工艺文档</strong><span class="drop-hint">Word（DOCX）、PDF、TXT、Markdown 或图片</span><span class="file-meta"></span><input type="file" id="doc-file" aria-label="上传技术文档" accept=".docx,.pdf,.txt,.md,.png,.jpg,.jpeg" hidden></div>
+      <div class="row options">
+        <label>模型 <select id="doc-provider"><option value="">默认配置</option><option value="mock">离线演示(Mock)</option><option value="openai_compat">视觉模型 API</option></select></label>
+        <button id="doc-start" class="primary">开始提取</button>
+      </div>
+    </div>
+    <div id="doc-progress" class="progress hidden"><div class="bar"></div><span>提取中…</span></div>
+    <div id="doc-error" class="alert error hidden"></div>
+    <div id="doc-empty" class="guide-strip"><strong>提取后如何复核</strong><p>查看技术参数、材料、工艺和检验四类结果，点击“定位原文”核对证据，再逐项确认或驳回。</p></div>
+    <div id="doc-result" class="hidden">
+      <p id="doc-status"></p>
+      <div class="card"><h2>原文定位</h2><pre id="doc-source-text" style="white-space:pre-wrap">点击提取项的“定位原文”</pre>
+        <canvas id="doc-source-canvas" style="max-width:100%"></canvas></div>
+      <div id="doc-tables"></div>
+      <div class="row">
+        <button id="doc-save" class="primary">保存要素编辑稿</button><button data-go="review">进入正式复核</button>
+        <span class="flex"></span>
+        <button data-dl="/api/export/doc/__ID__?fmt=json">导出 JSON</button>
+        <button data-dl="/api/export/doc/__ID__?fmt=xlsx">导出 Excel</button>
+      </div>
+      <div id="doc-save-msg" class="ok-msg hidden"></div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════ 文件对比 ═══════════ -->
+  <section id="view-compare" class="view">
+    <h1>看清版本变更，追踪影响范围</h1>
+    <p class="hint">上传同一文件的两个版本，自动识别新增（绿）/删除（红）/修改（黄），可生成变更单（ECN）草稿。</p>
+    <div class="card">
+      <div class="grid2">
+        <div class="drop compact" id="cmp-before"><span class="version-label">变更前</span><strong class="drop-title">上传旧版本</strong><span class="drop-hint">DOCX / 文本型 PDF / TXT / MD</span><span class="file-meta"></span><input type="file" id="cmp-file-before" aria-label="上传变更前版本" accept=".docx,.pdf,.txt,.md" hidden></div>
+        <div class="drop compact" id="cmp-after"><span class="version-label">变更后</span><strong class="drop-title">上传新版本</strong><span class="drop-hint">DOCX / 文本型 PDF / TXT / MD</span><span class="file-meta"></span><input type="file" id="cmp-file-after" aria-label="上传变更后版本" accept=".docx,.pdf,.txt,.md" hidden></div>
+      </div>
+      <div class="row options">
+        <label class="chk"><input type="checkbox" id="cmp-ignore-format" checked> 忽略纯格式变化</label>
+        <button id="cmp-start" class="primary">开始对比</button>
+      </div>
+    </div>
+    <div id="cmp-progress" class="progress hidden"><div class="bar"></div><span>对齐与识别中…</span></div>
+    <div id="cmp-error" class="alert error hidden"></div>
+    <div id="compare-empty" class="guide-strip"><strong>准备关联数据，让影响分析更完整</strong><p>版本对比可以直接使用。分析受影响的 BOM、工序和检验项，需要先在系统设置导入企业关联索引。</p><button data-go="settings" class="quiet">查看关联索引设置</button></div>
+    <div id="cmp-result" class="hidden">
+      <div class="card">
+        <h2>变更概览</h2>
+        <div id="cmp-summary" class="chips"></div>
+        <div class="row" style="margin-top:12px">
+          <label>筛选 <select id="cmp-filter"><option value="">全部</option><option value="added">仅新增</option><option value="removed">仅删除</option><option value="modified">仅修改</option></select></label>
+          <span class="flex"></span>
+          <button id="cmp-ecn">导出 ECN 草稿</button>
+        </div>
+      </div>
+      <div id="cmp-items"></div>
+      <div class="card"><h2>变更影响范围</h2><p id="impact-status"></p><div id="impact-results"></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 复核与历史 ═══════════ -->
+  <section id="view-review" class="view">
+    <h1>让每一次确认都有记录</h1><p class="hint">编辑稿保存、正式审核和数据集验收分别留痕。批准仅对当前快照生效。</p>
+    <div class="card"><h2>数据集与验收审查</h2><p>核对外部图纸、参考标签、模型结果和人工构造纠错样本，录入独立人工标注。</p><p>公开源码版不附带外部数据集图纸；可运行 scripts/make_demo_data.py 生成离线演示样本。</p></div>
+    <div class="card"><h2>编制 → 复核 → 批准</h2>
+      <p>先载入 BOM 或文档的当前结果，再提交快照。批准只对该快照有效；后续编辑必须重新提交。身份由管理员在服务端配置。</p>
+      <ol class="workflow-steps"><li><span>1</span>编制提交</li><li><span>2</span>独立复核</li><li><span>3</span>批准归档</li></ol>
+      <div class="row"><label>文档 / 任务编号<input id="workflow-id" placeholder="载入当前结果，或输入已有编号"></label><label>个人复核令牌<input id="workflow-token" type="password" autocomplete="off" placeholder="管理员分配的身份令牌"></label><button id="workflow-load">加载版本</button></div>
+      <div class="row"><button id="workflow-bom">载入当前 BOM</button><button id="workflow-doc">载入当前文档要素</button></div>
+      <details id="workflow-detail"><summary>展开审核内容与 JSON 快照</summary><p class="hint">复核和批准前请展开核对。修改快照后，须由编制人重新提交。</p><textarea id="workflow-payload" rows="12" style="width:100%" aria-label="待提交版本快照"></textarea></details>
+      <div class="row review-actions"><button data-review-action="submit" class="primary">编制提交</button><button data-review-action="review">复核通过</button><button data-review-action="reject" class="danger">退回修改</button><button data-review-action="approve">批准此版本</button></div>
+      <pre id="workflow-status">尚未加载版本</pre>
+    </div>
+    <div class="card"><h2>人工修正记录（供模型迭代）</h2><div class="table-wrap"><table id="review-table"></table></div></div>
+    <div class="card"><h2>变更历史</h2><div class="table-wrap"><table id="history-table"></table></div></div>
+  </section>
+
+  <!-- ═══════════ 检测历史 ═══════════ -->
+  <section id="view-dethistory" class="view">
+    <h1>每一次检测都有据可查</h1>
+    <p class="hint">自动记录每次上传图纸的识别结果（含失败任务）：BOM 行数与字段填充率、置信度、装配树指标、审图发现与分段耗时。任务目录会过期清理，但历史快照长期可查。</p>
+    <div class="card">
+      <div class="row options" style="margin-top:0">
+        <label>文件名筛选 <input id="deth-file" type="search" placeholder="文件名关键字"></label>
+        <label>状态 <select id="deth-status"><option value="">全部</option><option value="ok">成功</option><option value="failed">失败</option></select></label>
+        <button id="deth-refresh" class="primary">刷新</button>
+      </div>
+      <div id="deth-summary" class="chips" style="margin-top:12px"></div>
+      <div class="table-wrap" style="margin-top:12px"><table id="deth-table">
+        <thead><tr><th>完成时间</th><th>文件</th><th>模型</th><th>状态</th><th>BOM行</th><th>装配节点/深度</th><th>待复核</th><th>校验问题</th><th>审图发现</th><th>识别(s)</th><th>审图(s)</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 设置 ═══════════ -->
+  <section id="view-settings" class="view">
+    <h1>配置工作环境</h1><p class="hint">先连接视觉模型，再按需要配置企业导出格式、图纸要求和变更关联。</p>
+    <div class="card" id="enterprise-panel"><h2>企业字段与标注要求 <span class="badge">按需配置</span></h2><p>让导出的 BOM 使用企业列名，并告诉模型需要关注哪些参数和标注要求。</p><p class="config-example">例如：将“件号”导出为“物料编码”；对指定零件检查热处理标注。</p>
+      <details><summary>配置文件需要哪些内容？</summary><p>使用 JSON 文件，包含 export_fields（字段映射）、parameter_dictionary（参数词典）和 required_annotations（标注规则）。规则须注明适用条件和依据。项目 examples 目录提供示例。</p></details>
+      <label for="enterprise-file">选择企业配置文件（JSON）</label><input id="enterprise-file" type="file" accept=".json"><button id="enterprise-save">导入企业配置</button><span id="enterprise-message" role="status"></span>
+      <p><button id="enterprise-json">导出当前BOM企业JSON</button><button id="enterprise-csv">导出企业CSV</button><button id="enterprise-xlsx">导出企业Excel</button></p>
+    </div>
+    <div class="card" id="association-panel"><h2>企业关联索引 <span class="badge">影响分析使用</span></h2>
+      <p>告诉系统哪些文档、零件、工序和检验项目彼此关联，变更时才能找到受影响的对象。</p><p class="config-example">材料规范变更 → 关联 BOM → 加工工序 → 检验项目</p>
+      <details><summary>配置文件需要哪些内容？</summary><p>导入 JSON 对象清单，填写唯一 ID、对象类型、匹配关键词和依赖关系。depends_on 表示该对象依赖的上游对象。缺少索引时，系统会提示无法判定影响。</p></details>
+      <label for="impact-index-file">选择关联索引文件（JSON）</label><input id="impact-index-file" type="file" accept=".json"><button id="impact-index-save">导入关联索引</button><span id="impact-index-message" role="status"></span>
+    </div>
+    <div class="card">
+      <h2>视觉模型 API 接入</h2>
+      <p class="hint">填写后点「保存设置」即可全局生效，各功能页的「模型」下拉框选“默认配置”就走这里。<br>
+        内网部署（约束 C-01/C-02）：Base URL 指向内网 vLLM 服务（如 http://10.0.0.5:8000/v1），模型名填服务加载的开源模型（Qwen2.5-VL / InternVL 等），数据不出厂区。</p>
+      <div class="grid2">
+        <label>模型连接方式<br>
+          <select id="cfg-provider">
+            <option value="mock">mock（离线演示，不调用 API）</option>
+            <option value="openai_compat">openai_compat（OpenAI 兼容接口）</option>
+          </select>
+        </label>
+        <label>视觉模型名称<br><input id="cfg-model" placeholder="填写服务商提供的视觉模型 ID"></label>
+        <label>Base URL<br><input id="cfg-base-url" placeholder="如 https://dashscope.aliyuncs.com/compatible-mode/v1"></label>
+        <label>API Key<br>
+          <input id="cfg-api-key" type="password" autocomplete="off"
+                 placeholder="sk-... （留空表示沿用已保存/环境变量的值）">
+        </label>
+      </div>
+      <p class="hint" id="cfg-key-hint"></p>
+      <div class="row">
+        <button id="cfg-save" class="primary">保存设置</button>
+        <button id="cfg-test">测试连接</button>
+        <button id="cfg-clear-key">清除已保存的 Key</button>
+        <span id="cfg-msg" class="ok-msg hidden"></span>
+      </div>
+      <div id="cfg-test-result" class="alert hidden"></div>
+    </div>
+    <div class="card">
+      <h2>当前状态</h2>
+      <div id="cfg-status" class="kv-grid"></div>
+    </div>
+    <div class="card">
+      <h2>各功能页如何选用模型</h2>
+      <p class="hint">「BOM 与图纸纠错 / 文档要素与复核」页面上各有一个「模型」下拉框：<br>
+        · <b>默认配置</b> = 用本页设置的模型　· <b>离线演示(Mock)</b> = 不花钱跑固定示例数据　· <b>视觉模型 API</b> = 强制走真实模型<br>
+        命令行/批量实验的密钥仍可用服务端环境变量 <code>VISION_API_KEY</code> 提供（优先级低于本页保存的值）。</p>
+    </div>
+  </section>
+</main>
+<dialog id="help-dialog" aria-labelledby="help-title"><div class="section-heading"><h2 id="help-title">开始使用工艺智能工作台</h2><button id="help-close" aria-label="关闭使用指南">关闭</button></div><p>第一次使用，先在系统设置连接支持图像输入的模型。</p><ol class="help-list"><li><b>生成 BOM 与检查图纸</b><p>上传二维图纸，核对清单和问题候选，保存后导出。</p></li><li><b>提取技术文档要素</b><p>上传文档，定位原文，逐项确认参数、材料、工艺和检验要求。</p></li><li><b>分析版本变化</b><p>上传前后两个版本；配置企业关联索引后，可继续追踪影响范围。</p></li><li><b>完成正式审核</b><p>编辑稿保存不等于批准。到“复核与历史”，使用独立身份完成编制、复核和批准。</p></li></ol><p class="hint">详细说明书位于项目 docs/USER_MANUAL.md。离线演示使用固定示例，不能验证真实图纸准确率。</p></dialog>
+<dialog id="deth-dialog" aria-labelledby="deth-dialog-title"><div class="section-heading"><h2 id="deth-dialog-title">检测详情</h2><button id="deth-dialog-max" aria-label="放大详情">放大</button><button id="deth-dialog-close" aria-label="关闭详情">关闭</button></div><div id="deth-detail"></div></dialog>
+<script src="/static/app.js?v=20261012-2"></script>
+<script src="/static/extensions.js?v=20261012-2"></script>
+<script src="/static/workspace.js?v=20261011-1"></script>
+</body>
+</html>
+

@@ -1,0 +1,38 @@
+{
+  "objects": [
+    {
+      "id": "SPEC-001",
+      "name": "材料规范（示例）",
+      "kind": "document",
+      "keywords": [
+        "TC4"
+      ],
+      "source": "示例，非真实企业关联"
+    },
+    {
+      "id": "BOM-001",
+      "name": "零件BOM（示例）",
+      "kind": "bom",
+      "depends_on": [
+        "SPEC-001"
+      ]
+    },
+    {
+      "id": "OP-010",
+      "name": "加工工序（示例）",
+      "kind": "process",
+      "depends_on": [
+        "BOM-001"
+      ]
+    },
+    {
+      "id": "QC-010",
+      "name": "检验项（示例）",
+      "kind": "inspection",
+      "depends_on": [
+        "OP-010"
+      ],
+      "critical": true
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+# Optional native DXF ingestion
+ ezdxf>=1.1,<1.4
+ matplotlib>=3.5

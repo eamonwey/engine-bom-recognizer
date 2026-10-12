@@ -1,0 +1,13 @@
+{
+  "checked_on": "2026-10-11",
+  "scope": "官方状态元数据快照；不包含完整标准条文或公差/紧固件尺寸表，不是实时查询。",
+  "entries": [
+    {"reference":"GB/T 1800.2-2020","status":"current","checked_on":"2026-10-11","source":"https://openstd.samr.gov.cn/bzgk/std/std_list?p.p1=0&p.p2=GB%2FT1800.2&p.p90=circulation_date&p.p91=desc"},
+    {"reference":"GB/T 1800.2-2009","status":"replaced","replacement":"GB/T 1800.2-2020","checked_on":"2026-10-11","source":"https://openstd.samr.gov.cn/bzgk/std/std_list?p.p1=0&p.p2=GB%2FT1800.2&p.p90=circulation_date&p.p91=desc"},
+    {"reference":"GB/T 1182-2018","status":"current","checked_on":"2026-10-11","source":"https://std.samr.gov.cn/gb/search/gbDetailed?id=7643B2F25130267CE05397BE0A0AAF6A"},
+    {"reference":"GB/T 1182-2008","status":"replaced","replacement":"GB/T 1182-2018","checked_on":"2026-10-11","source":"https://std.samr.gov.cn/gb/search/gbDetailed?id=7643B2F25130267CE05397BE0A0AAF6A"},
+    {"reference":"GB/T 70.1-2008","status":"current","checked_on":"2026-10-11","incompatible_name_terms":["螺母","垫圈","轴承"],"source":"https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D7F825D3A7E05397BE0A0AB82A"},
+    {"reference":"GB/T 70.1-2000","status":"replaced","replacement":"GB/T 70.1-2008","checked_on":"2026-10-11","source":"https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D7F825D3A7E05397BE0A0AB82A"},
+    {"reference":"GB/T 14690-1993","status":"current","checked_on":"2026-10-11","source":"https://std.samr.gov.cn/gb/search/gbDetailedCNF?id=71F772D7889FD3A7E05397BE0A0AB82A"}
+  ]
+}

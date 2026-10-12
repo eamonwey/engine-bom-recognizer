@@ -1,0 +1,36 @@
+{
+  "provider": {
+    "name": "openai_compat",
+    "openai_compat": {
+      "base_url": "http://127.0.0.1:8000/v1",
+      "model": "local-drawing-vlm",
+      "api_key_env": "EDGE_VISION_API_KEY",
+      "timeout": 300,
+      "retries": 1,
+      "max_tokens": 2048,
+      "max_image_long_side": 2240
+    }
+  },
+  "agent_loop": {
+    "max_attempts": 3
+  },
+  "recognition": {
+    "prompt_version": "v3",
+    "preserve_printed_rows": true
+  },
+  "inspection": {
+    "enabled": true,
+    "max_attempts": 3
+  },
+  "ingestion": {
+    "dpi": 300,
+    "max_image_long_side": 2240
+  },
+  "output": {
+    "dir": "data/predictions-edge",
+    "formats": [
+      "json",
+      "csv"
+    ]
+  }
+}

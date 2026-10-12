@@ -1,0 +1,39 @@
+{
+  "version": "example-1",
+  "export_fields": {
+    "part_number": "物料编码",
+    "name_zh": "物料名称",
+    "quantity": "数量",
+    "material": "材料牌号"
+  },
+  "required_annotations": [
+    {
+      "id": "EXAMPLE-01",
+      "requirement": "图纸注明热处理要求",
+      "source": "演示规则，必须替换为真实企业标准条款",
+      "applies_when": "仅适用于企业规定需要热处理的零件"
+    }
+  ],
+  "parameter_dictionary": [
+    "尺寸",
+    "公差",
+    "温度",
+    "压力",
+    "转速",
+    "电压",
+    "电流",
+    "功率",
+    "频率",
+    "流量",
+    "扭矩",
+    "硬度",
+    "粗糙度",
+    "同轴度",
+    "平面度",
+    "垂直度",
+    "圆度",
+    "跳动",
+    "间隙",
+    "厚度"
+  ]
+}

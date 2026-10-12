@@ -1,0 +1,25 @@
+# Public demo configuration. Copy to config.yaml to use with the web UI.
+# Mock returns fixed synthetic data; configure a real VLM in the web settings.
+provider:
+  name: mock
+  openai_compat:
+    base_url: ""
+    model: ""
+    api_key_env: VISION_API_KEY
+    temperature: 0.0
+    max_tokens: 4096
+    timeout: 300
+    retries: 2
+assembly:
+  enabled: false
+inspection:
+  enabled: false
+recognition:
+  prompt_version: v4
+  preserve_printed_rows: true
+knowledge:
+  enabled: true
+  path: data/knowledge/engine_rules.txt
+output:
+  dir: data/predictions
+  formats: [json, csv]

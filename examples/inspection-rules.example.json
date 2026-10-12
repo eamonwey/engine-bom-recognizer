@@ -1,0 +1,23 @@
+{
+  "version": "inspection-demo-20261011",
+  "export_fields": {},
+  "parameter_dictionary": [],
+  "required_annotations": [
+    {
+      "id": "DEMO-HEAT",
+      "requirement": "明确注明热处理要求",
+      "source": "演示企业规则，实际使用前替换为真实企业条款",
+      "applies_when": "仅在原图明确注明该零件需要热处理时适用，不适用于所有零件",
+      "match_terms": ["淬火", "回火", "退火", "热处理"]
+    }
+  ],
+  "inspection_rules": {
+    "format_policy": {
+      "source": "演示企业模板，实际使用前按企业允许图幅和比例修改",
+      "allowed_scales": ["1:1", "1:2", "1:5", "1:10", "2:1", "5:1"],
+      "allowed_sheets": ["A0", "A1", "A2", "A3", "A4"]
+    },
+    "standards": [],
+    "tolerance_bands": []
+  }
+}

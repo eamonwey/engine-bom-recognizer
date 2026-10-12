@@ -1,0 +1,7 @@
+pymupdf>=1.24
+pillow>=10.0
+pyyaml>=6.0
+
+# 可选依赖
+# openpyxl>=3.1   # 启用 xlsx 导出时安装
+# opencv-python>=4.8  # 图纸轮廓补边与图像预处理（依赖 numpy）；未安装时定位标为待核实

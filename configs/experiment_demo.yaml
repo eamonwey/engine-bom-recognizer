@@ -1,0 +1,37 @@
+# 实验规格示例：一条命令批量跑多个 run 并自动评测对比
+#   python -m engine_bom.cli experiment configs/experiment_demo.yaml
+experiment: demo_mock          # 实验名（决定输出子目录）
+
+dataset:
+  raw_dir: data/raw            # 输入文档目录（相对本文件或运行目录）
+  annotation_dir: data/annotations
+
+output:
+  pred_root: data/predictions  # 预测 -> <pred_root>/<experiment>/<run_name>/
+  report_root: data/reports    # 报告 -> <report_root>/<experiment>/
+
+runs:
+  - name: mock_per_page
+    provider: mock
+    mode: per_page
+
+  - name: mock_whole_doc
+    provider: mock
+    mode: whole_doc
+
+  # ===== 接入视觉模型 API 后，取消注释即可加入对比实验 =====
+  # - name: glm4v_per_page
+  #   provider: openai_compat
+  #   mode: per_page
+  #   prompt_version: v1
+  #   provider_options:
+  #     base_url: https://open.bigmodel.cn/api/paas/v4
+  #     model: glm-4v-plus
+  #     temperature: 0.0
+  #
+  # - name: qwen25vl_wholedoc
+  #   provider: openai_compat
+  #   mode: whole_doc
+  #   provider_options:
+  #     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  #     model: qwen2.5-vl-72b-instruct
